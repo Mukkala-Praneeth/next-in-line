@@ -101,6 +101,18 @@ Frontend runs on `http://localhost:5173`
 
 ---
 
+## Testing the Decay System
+
+The default decay window is 48 hours. To test the decay cascade locally in real time:
+
+### Option 1: Create a job with a short decay window
+
+When creating a job on the Company Dashboard, set `Decay Window` to `0.0167` hours (1 minute).
+
+### Option 2: Set a short scheduler interval
+
+In `server/.env`, set:
+
 ## Architecture
 
 ### Database Schema

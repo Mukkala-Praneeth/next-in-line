@@ -212,11 +212,62 @@ const getJobApplications = async (req, res) => {
   }
 };
 
+const getApplicationHistory = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const appRes = await db.query(
+      `SELECT a.*, j.company_id
+       FROM applications a
+       JOIN jobs j ON a.job_id = j.id
+       WHERE a.id = $1`,
+      [id]
+    );
+
+    if (appRes.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Application not found.', data: {} });
+    }
+
+    const application = appRes.rows[0];
+
+    if (req.user.role === 'company' && application.company_id !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Unauthorized.', data: {} });
+    }
+
+    if (req.user.role === 'applicant' && application.applicant_id !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Unauthorized.', data: {} });
+    }
+
+    const historyRes = await db.query(
+      `SELECT
+        stl.*,
+        to_char(stl.created_at, 'YYYY-MM-DD HH24:MI:SS') as formatted_time
+       FROM state_transition_logs stl
+       WHERE stl.application_id = $1
+       ORDER BY stl.created_at ASC`,
+      [id]
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Application history retrieved.',
+      data: {
+        application_id: id,
+        history: historyRes.rows
+      }
+    });
+  } catch (error) {
+    console.error('Get history error:', error);
+    res.status(500).json({ success: false, message: 'Server error.', data: {} });
+  }
+};
+
 module.exports = {
   apply,
   withdraw,
   reject,
   hire,
   getStatus,
-  getJobApplications
+  getJobApplications,
+  getApplicationHistory
 };

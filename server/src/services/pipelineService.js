@@ -5,7 +5,6 @@ const submitApplication = async (jobId, applicantId) => {
   try {
     await client.query('BEGIN');
 
-    // Lock the job row
     const jobRes = await client.query(
       'SELECT * FROM jobs WHERE id = $1 FOR UPDATE',
       [jobId]
@@ -18,7 +17,6 @@ const submitApplication = async (jobId, applicantId) => {
       throw new Error('Job is not open for applications');
     }
 
-    // Duplicate check
     const dupRes = await client.query(
       'SELECT id FROM applications WHERE job_id = $1 AND applicant_id = $2',
       [jobId, applicantId]
@@ -27,7 +25,6 @@ const submitApplication = async (jobId, applicantId) => {
       throw new Error('Already applied for this job');
     }
 
-    // Count current active applications
     const activeRes = await client.query(
       "SELECT COUNT(*) FROM applications WHERE job_id = $1 AND status = 'active'",
       [jobId]
@@ -42,7 +39,6 @@ const submitApplication = async (jobId, applicantId) => {
       reason = 'applied_within_capacity';
     }
 
-    // Insert application
     const insertRes = await client.query(
       `INSERT INTO applications (job_id, applicant_id, status, decay_level)
        VALUES ($1, $2, $3, 0)
@@ -51,7 +47,6 @@ const submitApplication = async (jobId, applicantId) => {
     );
     const application = insertRes.rows[0];
 
-    // Log state transition
     await client.query(
       `INSERT INTO state_transition_logs (application_id, from_status, to_status, reason)
        VALUES ($1, NULL, $2, $3)`,
@@ -60,7 +55,6 @@ const submitApplication = async (jobId, applicantId) => {
 
     await client.query('COMMIT');
 
-    // Calculate queue position AFTER commit using pool (not client)
     if (status === 'waitlisted') {
       application.queue_position = await getQueuePosition(
         db, jobId, application.decay_level, application.created_at
@@ -110,7 +104,6 @@ const promoteNextApplicant = async (jobId, client) => {
 };
 
 const exitPipeline = async (applicationId, reason) => {
-  // Validate reason
   const validReasons = ['rejected', 'withdrawn', 'hired'];
   if (!validReasons.includes(reason)) {
     throw new Error('Invalid exit reason');
@@ -120,7 +113,6 @@ const exitPipeline = async (applicationId, reason) => {
   try {
     await client.query('BEGIN');
 
-    // Lock the application row
     const appRes = await client.query(
       'SELECT * FROM applications WHERE id = $1 FOR UPDATE',
       [applicationId]
@@ -131,25 +123,21 @@ const exitPipeline = async (applicationId, reason) => {
     const application = appRes.rows[0];
     const oldStatus = application.status;
 
-    // Cannot exit if already exited
     if (['rejected', 'withdrawn', 'hired'].includes(oldStatus)) {
       throw new Error('Application has already exited the pipeline');
     }
 
-    // Update status
     await client.query(
       'UPDATE applications SET status = $1, status_updated_at = NOW() WHERE id = $2',
       [reason, applicationId]
     );
 
-    // Log transition
     await client.query(
       `INSERT INTO state_transition_logs (application_id, from_status, to_status, reason)
        VALUES ($1, $2, $3, $4)`,
       [applicationId, oldStatus, reason, `exit_${reason}`]
     );
 
-    // If was active, promote next person
     if (oldStatus === 'active') {
       await promoteNextApplicant(application.job_id, client);
     }
@@ -176,7 +164,10 @@ const getQueuePosition = async (clientOrPool, jobId, decayLevel, createdAt) => {
 
 const getApplicationStatus = async (applicantId, jobId) => {
   const appRes = await db.query(
-    'SELECT * FROM applications WHERE applicant_id = $1 AND job_id = $2',
+    `SELECT a.*, j.decay_window_hours
+     FROM applications a
+     JOIN jobs j ON a.job_id = j.id
+     WHERE a.applicant_id = $1 AND a.job_id = $2`,
     [applicantId, jobId]
   );
 
