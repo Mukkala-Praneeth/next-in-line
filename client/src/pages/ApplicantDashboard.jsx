@@ -43,9 +43,9 @@ export default function ApplicantDashboard() {
     setError('');
     setMessage('');
     try {
-      const res = await API.post(`/applications/${status.id}/acknowledge`);
-      setMessage('Promotion acknowledged!');
-      setStatus(res.data.data);
+      await API.post(`/applications/${status.id}/acknowledge`);
+      setMessage('Promotion acknowledged successfully!');
+      checkStatus();
     } catch (err) {
       setError(err.response?.data?.message || 'Error acknowledging');
     }
@@ -68,35 +68,42 @@ export default function ApplicantDashboard() {
     navigate('/applicant/login');
   };
 
-  const getStatusColor = (s) => {
-    switch (s) {
-      case 'active': return '#2d8a4e';
-      case 'waitlisted': return '#d4a017';
-      case 'hired': return '#1a73e8';
-      case 'rejected': return '#c0392b';
-      case 'withdrawn': return '#888';
-      default: return '#333';
-    }
+  const statusColors = {
+    active: { bg: '#e8f5e9', color: '#2d8a4e' },
+    waitlisted: { bg: '#fff8e1', color: '#d4a017' },
+    hired: { bg: '#e3f2fd', color: '#1a73e8' },
+    rejected: { bg: '#fdf0f0', color: '#c0392b' },
+    withdrawn: { bg: '#f5f5f5', color: '#888' }
   };
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h2>Applicant Dashboard</h2>
-        <button onClick={logout} style={{ padding: '10px 20px', background: '#666', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}>Logout</button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <h2 style={{ fontSize: 22, color: '#1a1a2e', margin: 0 }}>Applicant Dashboard</h2>
+        <button onClick={logout} style={{ padding: '8px 18px', background: '#555', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>Logout</button>
       </div>
 
-      {error && <p style={{ color: 'red', background: '#ffe0e0', padding: 10, borderRadius: 4 }}>{error}</p>}
-      {message && <p style={{ color: 'green', background: '#e0ffe0', padding: 10, borderRadius: 4 }}>{message}</p>}
+      {error && (
+        <div style={{ color: '#c0392b', background: '#fdf0f0', padding: '10px 14px', borderRadius: 6, marginBottom: 16, fontSize: 13 }}>
+          {error}
+          <span onClick={() => setError('')} style={{ float: 'right', cursor: 'pointer' }}>✕</span>
+        </div>
+      )}
+      {message && (
+        <div style={{ color: '#2d8a4e', background: '#e8f5e9', padding: '10px 14px', borderRadius: 6, marginBottom: 16, fontSize: 13 }}>
+          {message}
+          <span onClick={() => setMessage('')} style={{ float: 'right', cursor: 'pointer' }}>✕</span>
+        </div>
+      )}
 
       <div style={card}>
-        <h3>Job Actions</h3>
+        <h3 style={{ fontSize: 15, marginBottom: 12, color: '#1a1a2e' }}>Job Actions</h3>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <input
             placeholder="Enter Job ID"
             value={jobId}
             onChange={e => setJobId(e.target.value)}
-            style={{ padding: 10, border: '1px solid #ddd', borderRadius: 4, flex: 1 }}
+            style={{ padding: '9px 12px', border: '1px solid #ddd', borderRadius: 6, flex: 1, fontSize: 14, color: '#333', outline: 'none' }}
           />
           <button onClick={applyToJob} style={btnPrimary}>Apply</button>
           <button onClick={checkStatus} style={{ ...btnPrimary, background: '#444' }}>Check Status</button>
@@ -105,39 +112,48 @@ export default function ApplicantDashboard() {
 
       {status && (
         <div style={{ ...card, marginTop: 20 }}>
-          <h3>Your Application Status</h3>
+          <h3 style={{ fontSize: 15, marginBottom: 16, color: '#1a1a2e' }}>Your Application</h3>
 
+          {/* Status Badge */}
           <div style={{
             display: 'inline-block',
-            padding: '8px 20px',
-            borderRadius: 20,
-            background: getStatusColor(status.status),
-            color: 'white',
-            fontWeight: 'bold',
-            fontSize: 18,
-            marginBottom: 15
+            padding: '6px 18px',
+            borderRadius: 6,
+            background: (statusColors[status.status] || statusColors.withdrawn).bg,
+            color: (statusColors[status.status] || statusColors.withdrawn).color,
+            fontWeight: 700,
+            fontSize: 14,
+            letterSpacing: 0.5,
+            marginBottom: 16
           }}>
             {status.status.toUpperCase()}
           </div>
 
+          {/* Waitlisted Info */}
           {status.status === 'waitlisted' && (
-            <div style={{ marginTop: 10 }}>
-              <p style={{ fontSize: 24, fontWeight: 'bold', margin: 0 }}>
+            <div style={{ marginTop: 8, padding: 16, background: '#fafafa', borderRadius: 6 }}>
+              <div style={{ fontSize: 28, fontWeight: 700, color: '#1a1a2e' }}>
                 Queue Position: #{status.queue_position}
-              </p>
+              </div>
               {status.decay_count > 0 && (
-                <p style={{ color: 'red', fontSize: 14 }}>
-                  You have been decayed {status.decay_count} time(s). Decay level: {status.decay_level}
+                <p style={{ color: '#c0392b', fontSize: 12, marginTop: 8 }}>
+                  ⚠ You have been decayed {status.decay_count} time(s) · Decay level: {status.decay_level}
                 </p>
               )}
             </div>
           )}
 
+          {/* Promotion Pending Acknowledgment */}
           {status.status === 'active' && status.promoted_at && !status.acknowledged_at && (
-            <div style={{ marginTop: 15, background: '#fff3cd', padding: 15, borderRadius: 4 }}>
-              <p style={{ margin: '0 0 10px', fontWeight: 'bold' }}>⚠️ You've been promoted! Acknowledge to keep your spot.</p>
-              <p style={{ margin: '0 0 10px', fontSize: 14, color: '#666' }}>
+            <div style={{ marginTop: 12, background: '#fff8e1', padding: 16, borderRadius: 6, border: '1px solid #f0e0a0' }}>
+              <p style={{ fontWeight: 700, fontSize: 14, color: '#1a1a2e', marginBottom: 6 }}>
+                🎉 You've been promoted to active review!
+              </p>
+              <p style={{ fontSize: 12, color: '#888', marginBottom: 12 }}>
                 Promoted at: {new Date(status.promoted_at).toLocaleString()}
+              </p>
+              <p style={{ fontSize: 12, color: '#c0392b', marginBottom: 14 }}>
+                Acknowledge promptly to keep your active spot. Failure to respond will push you back to the waitlist.
               </p>
               <button onClick={acknowledge} style={{ ...btnPrimary, background: '#2d8a4e' }}>
                 ✅ Acknowledge Promotion
@@ -145,18 +161,18 @@ export default function ApplicantDashboard() {
             </div>
           )}
 
+          {/* Acknowledged */}
           {status.status === 'active' && status.acknowledged_at && (
-            <p style={{ color: 'green', marginTop: 10 }}>✅ You have acknowledged your promotion.</p>
+            <div style={{ marginTop: 12, padding: 12, background: '#e8f5e9', borderRadius: 6 }}>
+              <p style={{ color: '#2d8a4e', fontSize: 13, fontWeight: 600 }}>
+                ✅ Promotion acknowledged · Your application is being actively reviewed
+              </p>
+            </div>
           )}
 
-          {status.status === 'active' && (
-            <button onClick={withdraw} style={{ ...btnPrimary, background: '#c0392b', marginTop: 15 }}>
-              Withdraw Application
-            </button>
-          )}
-
-          {status.status === 'waitlisted' && (
-            <button onClick={withdraw} style={{ ...btnPrimary, background: '#c0392b', marginTop: 15 }}>
+          {/* Withdraw Button */}
+          {(status.status === 'active' || status.status === 'waitlisted') && (
+            <button onClick={withdraw} style={{ ...btnPrimary, background: '#c0392b', marginTop: 16 }}>
               Withdraw Application
             </button>
           )}
@@ -166,5 +182,5 @@ export default function ApplicantDashboard() {
   );
 }
 
-const card = { background: 'white', padding: 20, borderRadius: 8, boxShadow: '0 1px 4px rgba(0,0,0,0.1)' };
-const btnPrimary = { padding: '10px 20px', background: '#1a1a2e', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' };
+const card = { background: 'white', padding: 20, borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' };
+const btnPrimary = { padding: '8px 18px', background: '#1a1a2e', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600 };

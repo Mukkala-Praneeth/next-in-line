@@ -54,6 +54,7 @@ export default function CompanyDashboard() {
     try {
       await API.post(`/applications/${appId}/${action}`);
       fetchApplications(selectedJob);
+      fetchJobs();
     } catch (err) {
       setError(err.response?.data?.message || `Error: ${action}`);
     }
@@ -64,37 +65,56 @@ export default function CompanyDashboard() {
     navigate('/company/login');
   };
 
+  const active = applications.filter(a => a.status === 'active');
+  const waitlisted = applications.filter(a => a.status === 'waitlisted');
+  const exited = applications.filter(a => ['rejected', 'withdrawn', 'hired'].includes(a.status));
+
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h2>Company Dashboard</h2>
-        <div>
-          <button onClick={() => setShowCreateJob(!showCreateJob)} style={btnPrimary}>+ Create Job</button>
-          <button onClick={logout} style={{ ...btnPrimary, background: '#666', marginLeft: 10 }}>Logout</button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <h2 style={{ fontSize: 22, color: '#1a1a2e', margin: 0 }}>Company Dashboard</h2>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button onClick={() => setShowCreateJob(!showCreateJob)} style={btnPrimary}>+ New Job</button>
+          <button onClick={logout} style={{ ...btnPrimary, background: '#555' }}>Logout</button>
         </div>
       </div>
 
-      {error && <p style={{ color: 'red', background: '#ffe0e0', padding: 10, borderRadius: 4 }}>{error}</p>}
+      {error && (
+        <div style={{ color: '#c0392b', background: '#fdf0f0', padding: '10px 14px', borderRadius: 6, marginBottom: 16, fontSize: 13 }}>
+          {error}
+          <span onClick={() => setError('')} style={{ float: 'right', cursor: 'pointer' }}>✕</span>
+        </div>
+      )}
 
       {showCreateJob && (
         <div style={card}>
-          <h3>Create New Job</h3>
+          <h3 style={{ fontSize: 16, marginBottom: 14, color: '#1a1a2e' }}>Create New Job Opening</h3>
           <form onSubmit={createJob}>
             <input placeholder="Job Title" value={jobForm.title} onChange={e => setJobForm({ ...jobForm, title: e.target.value })} style={inputStyle} />
-            <textarea placeholder="Description" value={jobForm.description} onChange={e => setJobForm({ ...jobForm, description: e.target.value })} style={{ ...inputStyle, height: 80 }} />
+            <textarea placeholder="Job Description" value={jobForm.description} onChange={e => setJobForm({ ...jobForm, description: e.target.value })} style={{ ...inputStyle, height: 70, resize: 'vertical' }} />
             <div style={{ display: 'flex', gap: 10 }}>
-              <input type="number" placeholder="Active Capacity" value={jobForm.active_capacity} onChange={e => setJobForm({ ...jobForm, active_capacity: parseInt(e.target.value) })} style={inputStyle} />
-              <input type="number" placeholder="Decay Window (hrs)" value={jobForm.decay_window_hours} onChange={e => setJobForm({ ...jobForm, decay_window_hours: parseInt(e.target.value) })} style={inputStyle} />
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>Active Capacity</label>
+                <input type="number" min="1" value={jobForm.active_capacity} onChange={e => setJobForm({ ...jobForm, active_capacity: parseInt(e.target.value) })} style={inputStyle} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>Decay Window (hours)</label>
+                <input type="number" min="1" value={jobForm.decay_window_hours} onChange={e => setJobForm({ ...jobForm, decay_window_hours: parseInt(e.target.value) })} style={inputStyle} />
+              </div>
             </div>
-            <button type="submit" style={btnPrimary}>Create</button>
+            <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+              <button type="submit" style={btnPrimary}>Create Job</button>
+              <button type="button" onClick={() => setShowCreateJob(false)} style={{ ...btnPrimary, background: '#888' }}>Cancel</button>
+            </div>
           </form>
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 20 }}>
-        <div style={{ flex: 1 }}>
-          <h3>Your Jobs</h3>
-          {jobs.length === 0 && <p style={{ color: '#888' }}>No jobs yet. Create one!</p>}
+      <div style={{ display: 'flex', gap: 24 }}>
+        {/* Jobs List */}
+        <div style={{ width: 280, flexShrink: 0 }}>
+          <h3 style={{ fontSize: 14, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>Your Jobs</h3>
+          {jobs.length === 0 && <p style={{ color: '#aaa', fontSize: 13 }}>No jobs created yet</p>}
           {jobs.map(job => (
             <div
               key={job.id}
@@ -102,61 +122,109 @@ export default function CompanyDashboard() {
               style={{
                 ...card,
                 cursor: 'pointer',
-                border: selectedJob === job.id ? '2px solid #1a1a2e' : '2px solid transparent'
+                borderLeft: selectedJob === job.id ? '3px solid #1a1a2e' : '3px solid transparent',
+                padding: '12px 14px'
               }}
             >
-              <h4 style={{ margin: '0 0 5px' }}>{job.title}</h4>
-              <p style={{ margin: 0, color: '#666', fontSize: 14 }}>
-                Capacity: {job.active_count}/{job.active_capacity} active | {job.waitlist_count} waitlisted
-              </p>
+              <div style={{ fontWeight: 600, fontSize: 14, color: '#1a1a2e', marginBottom: 4 }}>{job.title}</div>
+              <div style={{ fontSize: 12, color: '#888' }}>
+                <span style={{ color: '#2d8a4e' }}>{job.active_count} active</span>
+                <span style={{ margin: '0 6px' }}>·</span>
+                <span style={{ color: '#d4a017' }}>{job.waitlist_count} waitlisted</span>
+                <span style={{ margin: '0 6px' }}>·</span>
+                <span>capacity: {job.active_capacity}</span>
+              </div>
             </div>
           ))}
         </div>
 
-        <div style={{ flex: 2 }}>
+        {/* Pipeline View */}
+        <div style={{ flex: 1 }}>
+          {!selectedJob && (
+            <div style={{ textAlign: 'center', padding: 40, color: '#aaa' }}>
+              <p style={{ fontSize: 14 }}>← Select a job to view pipeline</p>
+            </div>
+          )}
+
           {selectedJob && (
             <>
-              <h3>Pipeline</h3>
-
-              <h4 style={{ color: '#2d8a4e' }}>Active</h4>
-              {applications.filter(a => a.status === 'active').map(app => (
-                <div key={app.id} style={{ ...card, borderLeft: '4px solid #2d8a4e' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <strong>{app.applicant_name}</strong> — {app.applicant_email}
-                      {app.promoted_at && !app.acknowledged_at && (
-                        <span style={{ color: 'orange', marginLeft: 10, fontSize: 12 }}>⏳ Awaiting acknowledgment</span>
-                      )}
-                      {app.acknowledged_at && (
-                        <span style={{ color: 'green', marginLeft: 10, fontSize: 12 }}>✅ Acknowledged</span>
-                      )}
-                    </div>
-                    <div>
-                      <button onClick={() => handleAction(app.id, 'hire')} style={btnSmallGreen}>Hire</button>
-                      <button onClick={() => handleAction(app.id, 'reject')} style={btnSmallRed}>Reject</button>
+              {/* Active Section */}
+              <div style={{ marginBottom: 24 }}>
+                <h3 style={sectionTitle}>
+                  <span style={{ background: '#e8f5e9', color: '#2d8a4e', padding: '3px 10px', borderRadius: 4, fontSize: 12 }}>
+                    ACTIVE ({active.length})
+                  </span>
+                </h3>
+                {active.length === 0 && <p style={emptyText}>No active applicants</p>}
+                {active.map(app => (
+                  <div key={app.id} style={{ ...card, borderLeft: '3px solid #2d8a4e', padding: '10px 14px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <span style={{ fontWeight: 600, color: '#1a1a2e', fontSize: 14 }}>{app.applicant_name}</span>
+                        <span style={{ color: '#888', fontSize: 12, marginLeft: 8 }}>{app.applicant_email}</span>
+                        {app.promoted_at && !app.acknowledged_at && (
+                          <span style={{ color: '#e67e22', fontSize: 11, marginLeft: 10, fontWeight: 600 }}>⏳ PENDING ACK</span>
+                        )}
+                        {app.acknowledged_at && (
+                          <span style={{ color: '#2d8a4e', fontSize: 11, marginLeft: 10 }}>✅ Acknowledged</span>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button onClick={() => handleAction(app.id, 'hire')} style={btnSmallGreen}>Hire</button>
+                        <button onClick={() => handleAction(app.id, 'reject')} style={btnSmallRed}>Reject</button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
 
-              <h4 style={{ color: '#d4a017' }}>Waitlisted</h4>
-              {applications.filter(a => a.status === 'waitlisted').map((app, i) => (
-                <div key={app.id} style={{ ...card, borderLeft: '4px solid #d4a017' }}>
-                  <strong>#{i + 1}</strong> — {app.applicant_name} — {app.applicant_email}
-                  {app.decay_count > 0 && (
-                    <span style={{ color: 'red', marginLeft: 10, fontSize: 12 }}>
-                      Decayed {app.decay_count}x (level {app.decay_level})
+              {/* Waitlisted Section */}
+              <div style={{ marginBottom: 24 }}>
+                <h3 style={sectionTitle}>
+                  <span style={{ background: '#fff8e1', color: '#d4a017', padding: '3px 10px', borderRadius: 4, fontSize: 12 }}>
+                    WAITLISTED ({waitlisted.length})
+                  </span>
+                </h3>
+                {waitlisted.length === 0 && <p style={emptyText}>No waitlisted applicants</p>}
+                {waitlisted.map((app, i) => (
+                  <div key={app.id} style={{ ...card, borderLeft: '3px solid #d4a017', padding: '10px 14px' }}>
+                    <span style={{ fontWeight: 700, color: '#d4a017', marginRight: 10, fontSize: 13 }}>#{i + 1}</span>
+                    <span style={{ fontWeight: 600, color: '#1a1a2e', fontSize: 14 }}>{app.applicant_name}</span>
+                    <span style={{ color: '#888', fontSize: 12, marginLeft: 8 }}>{app.applicant_email}</span>
+                    {app.decay_count > 0 && (
+                      <span style={{ color: '#c0392b', fontSize: 11, marginLeft: 10 }}>
+                        ⚠ Decayed {app.decay_count}× (level {app.decay_level})
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Exited Section */}
+              {exited.length > 0 && (
+                <div>
+                  <h3 style={sectionTitle}>
+                    <span style={{ background: '#f5f5f5', color: '#888', padding: '3px 10px', borderRadius: 4, fontSize: 12 }}>
+                      EXITED ({exited.length})
                     </span>
-                  )}
+                  </h3>
+                  {exited.map(app => (
+                    <div key={app.id} style={{ ...card, borderLeft: '3px solid #ddd', padding: '10px 14px', opacity: 0.6 }}>
+                      <span style={{ fontWeight: 600, fontSize: 14, color: '#555' }}>{app.applicant_name}</span>
+                      <span style={{
+                        marginLeft: 10,
+                        fontSize: 11,
+                        padding: '2px 8px',
+                        borderRadius: 4,
+                        background: app.status === 'hired' ? '#e8f5e9' : '#fdf0f0',
+                        color: app.status === 'hired' ? '#2d8a4e' : '#c0392b'
+                      }}>
+                        {app.status.toUpperCase()}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-
-              <h4 style={{ color: '#888' }}>Exited</h4>
-              {applications.filter(a => ['rejected', 'withdrawn', 'hired'].includes(a.status)).map(app => (
-                <div key={app.id} style={{ ...card, borderLeft: '4px solid #ccc', opacity: 0.6 }}>
-                  {app.applicant_name} — <em>{app.status}</em>
-                </div>
-              ))}
+              )}
             </>
           )}
         </div>
@@ -165,8 +233,11 @@ export default function CompanyDashboard() {
   );
 }
 
-const card = { background: 'white', padding: 15, borderRadius: 8, marginBottom: 10, boxShadow: '0 1px 4px rgba(0,0,0,0.1)' };
-const inputStyle = { display: 'block', width: '100%', padding: 10, marginBottom: 10, border: '1px solid #ddd', borderRadius: 4, boxSizing: 'border-box' };
-const btnPrimary = { padding: '10px 20px', background: '#1a1a2e', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' };
-const btnSmallGreen = { padding: '5px 12px', background: '#2d8a4e', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', marginRight: 5, fontSize: 12 };
-const btnSmallRed = { padding: '5px 12px', background: '#c0392b', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 12 };
+const card = { background: 'white', padding: 16, borderRadius: 8, marginBottom: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' };
+const inputStyle = { display: 'block', width: '100%', padding: '9px 12px', marginBottom: 10, border: '1px solid #ddd', borderRadius: 6, boxSizing: 'border-box', fontSize: 14, color: '#333', outline: 'none' };
+const labelStyle = { fontSize: 12, color: '#888', marginBottom: 4, display: 'block' };
+const btnPrimary = { padding: '8px 18px', background: '#1a1a2e', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600 };
+const btnSmallGreen = { padding: '4px 12px', background: '#2d8a4e', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 12, fontWeight: 600 };
+const btnSmallRed = { padding: '4px 12px', background: '#c0392b', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 12, fontWeight: 600 };
+const sectionTitle = { marginBottom: 10, marginTop: 0 };
+const emptyText = { color: '#bbb', fontSize: 13, padding: '8px 0' };

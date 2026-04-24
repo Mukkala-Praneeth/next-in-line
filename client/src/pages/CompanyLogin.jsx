@@ -24,9 +24,23 @@ export default function CompanyLogin() {
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: '50px auto', background: 'white', padding: 30, borderRadius: 8, boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
-      <h2>{isRegister ? 'Register Company' : 'Company Login'}</h2>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+    <div style={{
+      maxWidth: 380,
+      margin: '60px auto',
+      background: 'white',
+      padding: 32,
+      borderRadius: 10,
+      boxShadow: '0 2px 12px rgba(0,0,0,0.08)'
+    }}>
+      <h2 style={{ marginBottom: 6, fontSize: 22, color: '#1a1a2e' }}>
+        {isRegister ? 'Register Company' : 'Company Login'}
+      </h2>
+      <p style={{ color: '#888', fontSize: 13, marginBottom: 24 }}>
+        {isRegister ? 'Create your company account' : 'Sign in to manage your hiring pipeline'}
+      </p>
+
+      {error && <p style={{ color: '#c0392b', fontSize: 13, background: '#fdf0f0', padding: '8px 12px', borderRadius: 6, marginBottom: 16 }}>{error}</p>}
+
       <form onSubmit={handleSubmit}>
         {isRegister && (
           <input
@@ -50,14 +64,43 @@ export default function CompanyLogin() {
           onChange={e => setForm({ ...form, password: e.target.value })}
           style={inputStyle}
         />
-        <button type="submit" style={btnStyle}>{isRegister ? 'Register' : 'Login'}</button>
+        <button type="submit" style={btnStyle}>
+          {isRegister ? 'Create Account' : 'Sign In'}
+        </button>
       </form>
-      <p style={{ marginTop: 15, cursor: 'pointer', color: '#4a90d9' }} onClick={() => setIsRegister(!isRegister)}>
-        {isRegister ? 'Already have an account? Login' : 'No account? Register'}
+
+      <p
+        style={{ marginTop: 18, cursor: 'pointer', color: '#4a90d9', fontSize: 13, textAlign: 'center' }}
+        onClick={() => setIsRegister(!isRegister)}
+      >
+        {isRegister ? 'Already have an account? Sign in' : "Don't have an account? Register"}
       </p>
     </div>
   );
 }
 
-const inputStyle = { display: 'block', width: '100%', padding: '10px', marginBottom: 10, border: '1px solid #ddd', borderRadius: 4, boxSizing: 'border-box' };
-const btnStyle = { width: '100%', padding: '10px', background: '#1a1a2e', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 16 };
+const inputStyle = {
+  display: 'block',
+  width: '100%',
+  padding: '10px 12px',
+  marginBottom: 12,
+  border: '1px solid #ddd',
+  borderRadius: 6,
+  boxSizing: 'border-box',
+  fontSize: 14,
+  color: '#333',
+  outline: 'none'
+};
+
+const btnStyle = {
+  width: '100%',
+  padding: '11px',
+  background: '#1a1a2e',
+  color: 'white',
+  border: 'none',
+  borderRadius: 6,
+  cursor: 'pointer',
+  fontSize: 15,
+  fontWeight: 600,
+  marginTop: 4
+};

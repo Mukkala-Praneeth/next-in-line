@@ -7,23 +7,26 @@ import ApplicantDashboard from './pages/ApplicantDashboard';
 function App() {
   return (
     <BrowserRouter>
-      <div style={{ fontFamily: 'Arial, sans-serif', background: '#f5f5f5', minHeight: '100vh' }}>
+      <div>
         <nav style={{
           background: '#1a1a2e',
           color: 'white',
-          padding: '15px 30px',
+          padding: '14px 30px',
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center'
+          alignItems: 'center',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
         }}>
-          <h2 style={{ margin: 0 }}>Next In Line</h2>
-          <div>
-            <a href="/company/login" style={{ color: '#ccc', marginRight: 20, textDecoration: 'none' }}>Company</a>
-            <a href="/applicant/login" style={{ color: '#ccc', textDecoration: 'none' }}>Applicant</a>
+          <a href="/" style={{ color: 'white', fontSize: 20, fontWeight: 700, letterSpacing: '-0.5px' }}>
+            Next In Line
+          </a>
+          <div style={{ display: 'flex', gap: 20 }}>
+            <a href="/company/login" style={{ color: '#ccc', fontSize: 14, fontWeight: 500 }}>Company</a>
+            <a href="/applicant/login" style={{ color: '#ccc', fontSize: 14, fontWeight: 500 }}>Applicant</a>
           </div>
         </nav>
 
-        <div style={{ padding: '30px', maxWidth: 1000, margin: '0 auto' }}>
+        <div style={{ padding: '30px', maxWidth: 960, margin: '0 auto' }}>
           <Routes>
             <Route path="/" element={<CompanyLogin />} />
             <Route path="/company/login" element={<CompanyLogin />} />
