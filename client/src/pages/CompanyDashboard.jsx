@@ -60,11 +60,6 @@ export default function CompanyDashboard() {
     }
   };
 
-  const logout = () => {
-    localStorage.clear();
-    navigate('/company/login');
-  };
-
   const active = applications.filter(a => a.status === 'active');
   const waitlisted = applications.filter(a => a.status === 'waitlisted');
   const exited = applications.filter(a => ['rejected', 'withdrawn', 'hired'].includes(a.status));
@@ -73,16 +68,13 @@ export default function CompanyDashboard() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <h2 style={{ fontSize: 22, color: '#1a1a2e', margin: 0 }}>Company Dashboard</h2>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={() => setShowCreateJob(!showCreateJob)} style={btnPrimary}>+ New Job</button>
-          <button onClick={logout} style={{ ...btnPrimary, background: '#555' }}>Logout</button>
-        </div>
+        <button onClick={() => setShowCreateJob(!showCreateJob)} style={btnPrimary}>+ New Job</button>
       </div>
 
       {error && (
         <div style={{ color: '#c0392b', background: '#fdf0f0', padding: '10px 14px', borderRadius: 6, marginBottom: 16, fontSize: 13 }}>
           {error}
-          <span onClick={() => setError('')} style={{ float: 'right', cursor: 'pointer' }}>✕</span>
+          <span onClick={() => setError('')} style={{ float: 'right', cursor: 'pointer' }}>x</span>
         </div>
       )}
 
@@ -90,16 +82,38 @@ export default function CompanyDashboard() {
         <div style={card}>
           <h3 style={{ fontSize: 16, marginBottom: 14, color: '#1a1a2e' }}>Create New Job Opening</h3>
           <form onSubmit={createJob}>
-            <input placeholder="Job Title" value={jobForm.title} onChange={e => setJobForm({ ...jobForm, title: e.target.value })} style={inputStyle} />
-            <textarea placeholder="Job Description" value={jobForm.description} onChange={e => setJobForm({ ...jobForm, description: e.target.value })} style={{ ...inputStyle, height: 70, resize: 'vertical' }} />
+            <input
+              placeholder="Job Title"
+              value={jobForm.title}
+              onChange={e => setJobForm({ ...jobForm, title: e.target.value })}
+              style={inputStyle}
+            />
+            <textarea
+              placeholder="Job Description"
+              value={jobForm.description}
+              onChange={e => setJobForm({ ...jobForm, description: e.target.value })}
+              style={{ ...inputStyle, height: 70, resize: 'vertical' }}
+            />
             <div style={{ display: 'flex', gap: 10 }}>
               <div style={{ flex: 1 }}>
                 <label style={labelStyle}>Active Capacity</label>
-                <input type="number" min="1" value={jobForm.active_capacity} onChange={e => setJobForm({ ...jobForm, active_capacity: parseInt(e.target.value) })} style={inputStyle} />
+                <input
+                  type="number"
+                  min="1"
+                  value={jobForm.active_capacity}
+                  onChange={e => setJobForm({ ...jobForm, active_capacity: parseInt(e.target.value) })}
+                  style={inputStyle}
+                />
               </div>
               <div style={{ flex: 1 }}>
                 <label style={labelStyle}>Decay Window (hours)</label>
-                <input type="number" min="1" value={jobForm.decay_window_hours} onChange={e => setJobForm({ ...jobForm, decay_window_hours: parseInt(e.target.value) })} style={inputStyle} />
+                <input
+                  type="number"
+                  min="1"
+                  value={jobForm.decay_window_hours}
+                  onChange={e => setJobForm({ ...jobForm, decay_window_hours: parseInt(e.target.value) })}
+                  style={inputStyle}
+                />
               </div>
             </div>
             <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
@@ -111,9 +125,8 @@ export default function CompanyDashboard() {
       )}
 
       <div style={{ display: 'flex', gap: 24 }}>
-        {/* Jobs List */}
-        <div style={{ width: 280, flexShrink: 0 }}>
-          <h3 style={{ fontSize: 14, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>Your Jobs</h3>
+        <div style={{ width: 260, flexShrink: 0 }}>
+          <h3 style={{ fontSize: 13, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>Your Jobs</h3>
           {jobs.length === 0 && <p style={{ color: '#aaa', fontSize: 13 }}>No jobs created yet</p>}
           {jobs.map(job => (
             <div
@@ -129,28 +142,26 @@ export default function CompanyDashboard() {
               <div style={{ fontWeight: 600, fontSize: 14, color: '#1a1a2e', marginBottom: 4 }}>{job.title}</div>
               <div style={{ fontSize: 12, color: '#888' }}>
                 <span style={{ color: '#2d8a4e' }}>{job.active_count} active</span>
-                <span style={{ margin: '0 6px' }}>·</span>
+                <span style={{ margin: '0 5px' }}>·</span>
                 <span style={{ color: '#d4a017' }}>{job.waitlist_count} waitlisted</span>
-                <span style={{ margin: '0 6px' }}>·</span>
-                <span>capacity: {job.active_capacity}</span>
+                <span style={{ margin: '0 5px' }}>·</span>
+                <span>cap: {job.active_capacity}</span>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Pipeline View */}
         <div style={{ flex: 1 }}>
           {!selectedJob && (
-            <div style={{ textAlign: 'center', padding: 40, color: '#aaa' }}>
-              <p style={{ fontSize: 14 }}>← Select a job to view pipeline</p>
+            <div style={{ textAlign: 'center', padding: 60, color: '#bbb' }}>
+              <p style={{ fontSize: 14 }}>Select a job to view the pipeline</p>
             </div>
           )}
 
           {selectedJob && (
             <>
-              {/* Active Section */}
               <div style={{ marginBottom: 24 }}>
-                <h3 style={sectionTitle}>
+                <h3 style={{ marginBottom: 10 }}>
                   <span style={{ background: '#e8f5e9', color: '#2d8a4e', padding: '3px 10px', borderRadius: 4, fontSize: 12 }}>
                     ACTIVE ({active.length})
                   </span>
@@ -163,10 +174,14 @@ export default function CompanyDashboard() {
                         <span style={{ fontWeight: 600, color: '#1a1a2e', fontSize: 14 }}>{app.applicant_name}</span>
                         <span style={{ color: '#888', fontSize: 12, marginLeft: 8 }}>{app.applicant_email}</span>
                         {app.promoted_at && !app.acknowledged_at && (
-                          <span style={{ color: '#e67e22', fontSize: 11, marginLeft: 10, fontWeight: 600 }}>⏳ PENDING ACK</span>
+                          <span style={{ color: '#e67e22', fontSize: 11, marginLeft: 10, fontWeight: 600 }}>
+                            PENDING ACK
+                          </span>
                         )}
                         {app.acknowledged_at && (
-                          <span style={{ color: '#2d8a4e', fontSize: 11, marginLeft: 10 }}>✅ Acknowledged</span>
+                          <span style={{ color: '#2d8a4e', fontSize: 11, marginLeft: 10 }}>
+                            Acknowledged
+                          </span>
                         )}
                       </div>
                       <div style={{ display: 'flex', gap: 6 }}>
@@ -178,9 +193,8 @@ export default function CompanyDashboard() {
                 ))}
               </div>
 
-              {/* Waitlisted Section */}
               <div style={{ marginBottom: 24 }}>
-                <h3 style={sectionTitle}>
+                <h3 style={{ marginBottom: 10 }}>
                   <span style={{ background: '#fff8e1', color: '#d4a017', padding: '3px 10px', borderRadius: 4, fontSize: 12 }}>
                     WAITLISTED ({waitlisted.length})
                   </span>
@@ -193,17 +207,16 @@ export default function CompanyDashboard() {
                     <span style={{ color: '#888', fontSize: 12, marginLeft: 8 }}>{app.applicant_email}</span>
                     {app.decay_count > 0 && (
                       <span style={{ color: '#c0392b', fontSize: 11, marginLeft: 10 }}>
-                        ⚠ Decayed {app.decay_count}× (level {app.decay_level})
+                        Decayed {app.decay_count}x (level {app.decay_level})
                       </span>
                     )}
                   </div>
                 ))}
               </div>
 
-              {/* Exited Section */}
               {exited.length > 0 && (
                 <div>
-                  <h3 style={sectionTitle}>
+                  <h3 style={{ marginBottom: 10 }}>
                     <span style={{ background: '#f5f5f5', color: '#888', padding: '3px 10px', borderRadius: 4, fontSize: 12 }}>
                       EXITED ({exited.length})
                     </span>
@@ -239,5 +252,4 @@ const labelStyle = { fontSize: 12, color: '#888', marginBottom: 4, display: 'blo
 const btnPrimary = { padding: '8px 18px', background: '#1a1a2e', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600 };
 const btnSmallGreen = { padding: '4px 12px', background: '#2d8a4e', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 12, fontWeight: 600 };
 const btnSmallRed = { padding: '4px 12px', background: '#c0392b', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 12, fontWeight: 600 };
-const sectionTitle = { marginBottom: 10, marginTop: 0 };
-const emptyText = { color: '#bbb', fontSize: 13, padding: '8px 0' };
+const emptyText = { color: '#bbb', fontSize: 13, padding: '6px 0' };

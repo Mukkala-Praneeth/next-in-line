@@ -63,11 +63,6 @@ export default function ApplicantDashboard() {
     }
   };
 
-  const logout = () => {
-    localStorage.clear();
-    navigate('/applicant/login');
-  };
-
   const statusColors = {
     active: { bg: '#e8f5e9', color: '#2d8a4e' },
     waitlisted: { bg: '#fff8e1', color: '#d4a017' },
@@ -78,21 +73,21 @@ export default function ApplicantDashboard() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+      <div style={{ marginBottom: 24 }}>
         <h2 style={{ fontSize: 22, color: '#1a1a2e', margin: 0 }}>Applicant Dashboard</h2>
-        <button onClick={logout} style={{ padding: '8px 18px', background: '#555', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>Logout</button>
       </div>
 
       {error && (
         <div style={{ color: '#c0392b', background: '#fdf0f0', padding: '10px 14px', borderRadius: 6, marginBottom: 16, fontSize: 13 }}>
           {error}
-          <span onClick={() => setError('')} style={{ float: 'right', cursor: 'pointer' }}>✕</span>
+          <span onClick={() => setError('')} style={{ float: 'right', cursor: 'pointer' }}>x</span>
         </div>
       )}
+
       {message && (
         <div style={{ color: '#2d8a4e', background: '#e8f5e9', padding: '10px 14px', borderRadius: 6, marginBottom: 16, fontSize: 13 }}>
           {message}
-          <span onClick={() => setMessage('')} style={{ float: 'right', cursor: 'pointer' }}>✕</span>
+          <span onClick={() => setMessage('')} style={{ float: 'right', cursor: 'pointer' }}>x</span>
         </div>
       )}
 
@@ -114,7 +109,6 @@ export default function ApplicantDashboard() {
         <div style={{ ...card, marginTop: 20 }}>
           <h3 style={{ fontSize: 15, marginBottom: 16, color: '#1a1a2e' }}>Your Application</h3>
 
-          {/* Status Badge */}
           <div style={{
             display: 'inline-block',
             padding: '6px 18px',
@@ -129,7 +123,6 @@ export default function ApplicantDashboard() {
             {status.status.toUpperCase()}
           </div>
 
-          {/* Waitlisted Info */}
           {status.status === 'waitlisted' && (
             <div style={{ marginTop: 8, padding: 16, background: '#fafafa', borderRadius: 6 }}>
               <div style={{ fontSize: 28, fontWeight: 700, color: '#1a1a2e' }}>
@@ -137,40 +130,37 @@ export default function ApplicantDashboard() {
               </div>
               {status.decay_count > 0 && (
                 <p style={{ color: '#c0392b', fontSize: 12, marginTop: 8 }}>
-                  ⚠ You have been decayed {status.decay_count} time(s) · Decay level: {status.decay_level}
+                  You have been decayed {status.decay_count} time(s) - Decay level: {status.decay_level}
                 </p>
               )}
             </div>
           )}
 
-          {/* Promotion Pending Acknowledgment */}
           {status.status === 'active' && status.promoted_at && !status.acknowledged_at && (
             <div style={{ marginTop: 12, background: '#fff8e1', padding: 16, borderRadius: 6, border: '1px solid #f0e0a0' }}>
               <p style={{ fontWeight: 700, fontSize: 14, color: '#1a1a2e', marginBottom: 6 }}>
-                🎉 You've been promoted to active review!
+                You have been promoted to active review!
               </p>
               <p style={{ fontSize: 12, color: '#888', marginBottom: 12 }}>
                 Promoted at: {new Date(status.promoted_at).toLocaleString()}
               </p>
               <p style={{ fontSize: 12, color: '#c0392b', marginBottom: 14 }}>
-                Acknowledge promptly to keep your active spot. Failure to respond will push you back to the waitlist.
+                Acknowledge promptly to keep your spot. Failure to respond will push you back in the waitlist.
               </p>
               <button onClick={acknowledge} style={{ ...btnPrimary, background: '#2d8a4e' }}>
-                ✅ Acknowledge Promotion
+                Acknowledge Promotion
               </button>
             </div>
           )}
 
-          {/* Acknowledged */}
           {status.status === 'active' && status.acknowledged_at && (
             <div style={{ marginTop: 12, padding: 12, background: '#e8f5e9', borderRadius: 6 }}>
               <p style={{ color: '#2d8a4e', fontSize: 13, fontWeight: 600 }}>
-                ✅ Promotion acknowledged · Your application is being actively reviewed
+                Promotion acknowledged - Your application is being actively reviewed
               </p>
             </div>
           )}
 
-          {/* Withdraw Button */}
           {(status.status === 'active' || status.status === 'waitlisted') && (
             <button onClick={withdraw} style={{ ...btnPrimary, background: '#c0392b', marginTop: 16 }}>
               Withdraw Application
